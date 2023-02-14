@@ -1,9 +1,9 @@
 from bs4 import BeautifulSoup
 import requests
 
-year = 2019
+year = 2019 
 registernum = '*64697\-16*'
-rows = 1
+rows = 2
 start = 0
 sim="'"
 RegisterNumber = []
@@ -17,24 +17,26 @@ totalChar = []
 #print(response)
 #bs4 = BeautifulSoup(response.content,"lxml")
 url2 = 'https://fgis.gost.ru/fundmetrology/cm/xcdb/vri/select?fq=verification_year:'+str(year)+'&fq=mi.mitnumber:'+registernum+'&q=*&fl=vri_id,org_title,mi.mitnumber,mi.mititle,mi.mitype,mi.modification,mi.number,verification_date,valid_date,applicability,result_docnum,sticker_num&sort=verification_date+desc,org_title+asc&rows='+str(rows)+'&start='+str(start)
-response = requests.get(url2)
+response = requests.get(url2) #происходит попытка извлечь данные из определенного ресурса
 #print(response)
-bs4 = BeautifulSoup(response.content,"lxml")
-print(bs4)
-PageData = bs4.get_text()
+bs4 = BeautifulSoup(response.content,"lxml") #Создается объект BeautifulSoup, HTML-данные передаются конструктору. 
+#Второй параметр определяет синтаксический анализатор.
+#print(bs4)
+PageData = bs4.get_text() #возвращает весь текст HTML-документа или HTML-тега в виде единственной строки
 
 #Поиск максимального значения индекса в год
 IndexMaxRange = PageData.find('"numFound":')
 IndexMaxRange2 = PageData.find(',',IndexMaxRange+11,IndexMaxRange+17)
-CountMaxRange = int(PageData[IndexMaxRange+11:IndexMaxRange2])
-print(CountMaxRange)
+CountMaxRange = int(PageData[IndexMaxRange+11:IndexMaxRange2]) #срез 
+print(CountMaxRange) #235 - количество всех строк 
 
-for i in range (CountMaxRange):
+for i in range (2):
     rows=i+1
     url2 = 'https://fgis.gost.ru/fundmetrology/cm/xcdb/vri/select?fq=verification_year:'+str(year)+'&fq=mi.mitnumber:'+registernum+'&q=*&fl=vri_id,org_title,mi.mitnumber,mi.mititle,mi.mitype,mi.modification,mi.number,verification_date,valid_date,applicability,result_docnum,sticker_num&sort=verification_date+desc,org_title+asc&rows='+str(rows)+'&start='+str(start)
     response = requests.get(url2)
     bs4 = BeautifulSoup(response.content,"lxml")
     PageData = bs4.get_text()
+    print(bs4)
 
    #Запоминаем регистрационный номер в реестре
     IndexRegisterNumber = PageData.find('"mi.mitnumber":"')
@@ -64,7 +66,16 @@ for i in range (CountMaxRange):
     ModelName.append(PageData[IndexModelName+13:IndexModelName2-1])
     print(ModelName[i])
 
+
 file = open("parse.txt", "w")
-for i in range (CountMaxRange):
-    totalChar.append(RegisterNumber[i],' ',RegisterModification[i],' ',SerialNumber[i],' ',ModelName[i],'\n')
-    file.write(totalChar[i]) 
+for i in range (1):
+    totalChar.append(RegisterNumber[i])
+    totalChar.append(' ')
+    totalChar.append(RegisterModification[i])
+    totalChar.append(' ')
+    totalChar.append(SerialNumber[i])
+    totalChar.append(' ')
+    totalChar.append(ModelName[i])
+    totalChar.append('\n') 
+    for i in range(len(totalChar)):
+        file.write(totalChar[i]) 
