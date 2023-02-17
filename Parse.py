@@ -1,5 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
+from openpyxl import Workbook
+from openpyxl.utils import get_column_letter
 
 year = 2019 
 registernum = '*64697\-16*'
@@ -30,7 +32,7 @@ IndexMaxRange2 = PageData.find(',',IndexMaxRange+11,IndexMaxRange+17)
 CountMaxRange = int(PageData[IndexMaxRange+11:IndexMaxRange2]) #срез 
 print(CountMaxRange) #235 - количество всех строк 
 
-for i in range (2):
+for i in range (1):
     rows=i+1
     url2 = 'https://fgis.gost.ru/fundmetrology/cm/xcdb/vri/select?fq=verification_year:'+str(year)+'&fq=mi.mitnumber:'+registernum+'&q=*&fl=vri_id,org_title,mi.mitnumber,mi.mititle,mi.mitype,mi.modification,mi.number,verification_date,valid_date,applicability,result_docnum,sticker_num&sort=verification_date+desc,org_title+asc&rows='+str(rows)+'&start='+str(start)
     response = requests.get(url2)
@@ -79,3 +81,13 @@ for i in range (1):
     totalChar.append('\n') 
     for i in range(len(totalChar)):
         file.write(totalChar[i]) 
+
+wb = Workbook()   # создаётся файл Excel
+dest_filename = 'try.xlsx' # имя созданного файла Excel
+sheet = wb.active
+sheet.title = "static" # указывавем имя листу, с которым работаем
+for row in range(1, 2): 
+    for i in range(1):
+        sheet.append([RegisterNumber[i], RegisterModification[i], SerialNumber[i], ModelName[i]])
+wb.save(dest_filename) # сохраняем файл, с которым работали
+print('Конец, создан файл tey.xlsx с листом range names, где заполнены строки 1-39 порядковым номером столбца')
