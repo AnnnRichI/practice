@@ -90,4 +90,3 @@ for row in range(1, 2):
     for i in range(1):
         sheet.append([RegisterNumber[i], RegisterModification[i], SerialNumber[i], ModelName[i]])
 wb.save(dest_filename) # сохраняем файл, с которым работали
-print('Конец, создан файл tey.xlsx с листом range names, где заполнены строки 1-39 порядковым номером столбца')
