@@ -72,11 +72,17 @@ for i in range (CountMaxRange):
    #print(IndexModelName)
     ModelName.append(PageData[IndexModelName+13:IndexModelName2-1])
     #print(ModelName[i])
-
-    if count % 100 == 0:
+    
+    """if response.status_code == 429:
+        print(count) 
+        print(datetime.datetime.now().time())
+        time.sleep(int(response.headers["Retry-After"])) 
+    """
+    """if count % 100 == 0:
         print(count) 
         print(datetime.datetime.now().time())
         time.sleep(10) 
+    """
 
 
 """file = open("parse.txt", "w")
