@@ -1,9 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
 from openpyxl import Workbook
-#from openpyxl.utils import get_column_letter #???
-import time 
-import datetime
 
 year = 2019 
 registernum = '*64697\-16*'
@@ -35,69 +32,72 @@ IndexMaxRange2 = PageData.find(',',IndexMaxRange+11,IndexMaxRange+17)
 CountMaxRange = int(PageData[IndexMaxRange+11:IndexMaxRange2]) #срез 
 print(CountMaxRange) #235 - количество всех строк 
 
-for i in range (CountMaxRange):
-    count += 1
-    rows=i+1
+
+for i in range (CountMaxRange // 100 + 1):
+    rows= 100
     url2 = 'https://fgis.gost.ru/fundmetrology/cm/xcdb/vri/select?fq=verification_year:'+str(year)+'&fq=mi.mitnumber:'+registernum+'&q=*&fl=vri_id,org_title,mi.mitnumber,mi.mititle,mi.mitype,mi.modification,mi.number,verification_date,valid_date,applicability,result_docnum,sticker_num&sort=verification_date+desc,org_title+asc&rows='+str(rows)+'&start='+str(start)
     response = requests.get(url2)
     bs4 = BeautifulSoup(response.content,"lxml")
     PageData = bs4.get_text()
-    #print(bs4)
-
-   #Запоминаем регистрационный номер в реестре
-    IndexRegisterNumber = PageData.rfind('"mi.mitnumber":"')
-    #print(IndexRegisterNumber)
-    IndexRegisterNumber2 = PageData.find(',',IndexRegisterNumber+16,IndexRegisterNumber+28)
-    #print(IndexRegisterNumber)
-    RegisterNumber.append(PageData[IndexRegisterNumber+16:IndexRegisterNumber2-1]) 
-    #print(RegisterNumber[i])
-
-   #Запоминаем модификацию устройства
-    IndexRegisterModification = PageData.rfind('"mi.modification":"')
-    IndexRegisterModification2 = PageData.find(',',IndexRegisterModification+19,IndexRegisterModification+28)
-   #print(IndexRegisterModification)
-    RegisterModification.append(PageData[IndexRegisterModification+19:IndexRegisterModification2-1])
-    #print(RegisterModification[i])
-
-   #Запоминаем серийный номер устройства
-    IndexSerialNumber = PageData.rfind('"mi.number":"')
-    IndexSerialNumber2 = PageData.find(',',IndexSerialNumber+13,IndexSerialNumber+25)
-   #print(IndexSerialNumber)
-    SerialNumber.append(PageData[IndexSerialNumber+13:IndexSerialNumber2-1])
-    #print(SerialNumber[i])
-
-   #Запоминаем имя модели
-    IndexModelName = PageData.rfind('"mi.mitype":"')
-    IndexModelName2 = PageData.find(',',IndexModelName+13,IndexModelName+20)
-   #print(IndexModelName)
-    ModelName.append(PageData[IndexModelName+13:IndexModelName2-1])
-    #print(ModelName[i])
     
-    """if response.status_code == 429:
+    IndexDict = PageData.find('"docs":')
+    Result = PageData[IndexDict+7:-3]
+    ResultList = Result.split("}") #получили список
+     
+    NextRegisterNumber, NextModelName, NextSerialNumber, NextRegisterModification = 0, 0, 0, 0
+    for j in range(100):
+        count += 1
+        ResultString = ResultList[j]
+        #print(ResultString)
         print(count) 
-        print(datetime.datetime.now().time())
-        time.sleep(int(response.headers["Retry-After"])) 
-    """
-    """if count % 100 == 0:
-        print(count) 
-        print(datetime.datetime.now().time())
-        time.sleep(10) 
-    """
 
+        
+        #Запоминаем регистрационный номер в реестре
+        IndexRegisterNumber = ResultString.find('"mi.mitnumber":"')
+        #print(IndexRegisterNumber)
+        if IndexRegisterNumber == -1:
+            RegisterNumber.append(' ') 
+        else:
+            IndexRegisterNumber2 = ResultString.find(',',IndexRegisterNumber+16,IndexRegisterNumber+28)
+            #print(IndexRegisterNumber)
+            RegisterNumber.append(ResultString[IndexRegisterNumber+16:IndexRegisterNumber2-1]) 
+            #print(ResultString[IndexRegisterNumber+16:IndexRegisterNumber2-1])
+        
+        #Запоминаем модификацию устройства
+        IndexRegisterModification = ResultString.find('"mi.modification":"')
+        if IndexRegisterModification == -1:
+            RegisterModification.append(' ')
+        else:
+            IndexRegisterModification2 = ResultString.find(',',IndexRegisterModification+19,IndexRegisterModification+28)
+            #print(IndexRegisterModification)
+            RegisterModification.append(ResultString[IndexRegisterModification+19:IndexRegisterModification2-1])
+            #print(PageData[IndexRegisterModification+19:IndexRegisterModification2-1])
 
-"""file = open("parse.txt", "w")
-for i in range (1):
-    totalChar.append(RegisterNumber[i])
-    totalChar.append(' ')
-    totalChar.append(RegisterModification[i])
-    totalChar.append(' ')
-    totalChar.append(SerialNumber[i])
-    totalChar.append(' ')
-    totalChar.append(ModelName[i])
-    totalChar.append('\n') 
-    for i in range(len(totalChar)):
-        file.write(totalChar[i]) 
-"""
+        #Запоминаем серийный номер устройства
+        IndexSerialNumber = ResultString.find('"mi.number":"')
+        if IndexSerialNumber == -1:
+            SerialNumber.append(' ')
+        else:
+            IndexSerialNumber2 = ResultString.find(',',IndexSerialNumber+13,IndexSerialNumber+25)
+            #print(IndexSerialNumber)
+            SerialNumber.append(ResultString[IndexSerialNumber+13:IndexSerialNumber2-1])
+            #print(SerialNumber[i])
+
+        #Запоминаем имя модели
+        IndexModelName = ResultString.find('"mi.mitype":"')
+        if IndexModelName == -1:
+            ModelName.append(' ')
+        else:
+            IndexModelName2 = ResultString.find(',',IndexModelName+13,IndexModelName+20)
+            #print(IndexModelName)
+            ModelName.append(ResultString[IndexModelName+13:IndexModelName2-1])
+            #print(ModelName[i])
+            
+        if count == CountMaxRange:
+            break 
+        
+    start += 100
+
 
 wb = Workbook()   # создаётся файл Excel
 dest_filename = 'try.xlsx' # имя созданного файла Excel
@@ -107,5 +107,4 @@ for row in range(1, 2):
     for i in range(CountMaxRange):
         sheet.append([RegisterNumber[i], RegisterModification[i], SerialNumber[i], ModelName[i]])
 wb.save(dest_filename) # сохраняем файл, с которым работали
-print('Конец, создан файл tey.xlsx с листом range names, где заполнены строки 1-39 порядковым номером столбца')
-
+print('Файл создан')
