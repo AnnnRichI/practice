@@ -3,12 +3,30 @@ import requests
 from openpyxl import Workbook
 import openpyxl
 import time
+import re
 
+years = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
 wb = openpyxl.load_workbook("input.xlsx")
 ws = wb.active
-year = ws['A1'].value
-year_end = ws['B1'].value
-registernum = str(ws['A2'].value)
+year = ws['B7'].value
+if year not in years:
+    print("Неправильно указан год! Он должен быть в интервале с 2010 по 2023.")
+    exit()
+year_end = ws['B9'].value
+if year_end != None:
+    if year_end not in years:
+        print("Неправильно указан год! Он должен быть в интервале с 2010 по 2023.")
+        exit()
+    if year < year_end:
+        print("Второй год должен быть больше первого)")
+        exit()
+else:
+    year_end = year
+registernum = str(ws['B12'].value)
+check = re.match(r'\d{5}-\d{2}', registernum)
+if check == None:
+    print("Неправильно указан регистрационный номер.")
+    exit()
 registernum = f'{"*"}{registernum}{"*"}'
 
 time.sleep(10)
@@ -44,7 +62,6 @@ def find_max_range_index(PageData):
     CountMaxRange = int(PageData[IndexMaxRange + 11:IndexMaxRange2])  # срез
     return CountMaxRange
     # print(CountMaxRange)  # 235 - количество всех строк
-
 
 
 def find_info(index, ResultString, index_plus, index_plus_end):
