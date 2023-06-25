@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 from openpyxl import Workbook
 import openpyxl
+import time
 
 wb = openpyxl.load_workbook("input.xlsx")
 ws = wb.active
@@ -9,6 +10,8 @@ year = ws['A1'].value
 year_end = ws['B1'].value
 registernum = str(ws['A2'].value)
 registernum = f'{"*"}{registernum}{"*"}'
+
+time.sleep(10)
 
 rows = 2
 start = 0
@@ -63,10 +66,10 @@ while year != year_end + 1:
     for i in range(Count_Max_Range // 100 + 1):
         rows = 100
         PageData = receive_page(year, registernum, rows, start)
-
         IndexDict = PageData.find('"docs":')
         Result = PageData[IndexDict+7:-3]
         ResultList = Result.split("}") #получили список
+
         for j in range(rows):
             count += 1
             ResultString = ResultList[j]
