@@ -6,25 +6,25 @@ import time
 import re
 
 years = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
-wb = openpyxl.load_workbook("input.xlsx")
-ws = wb.active
-year = ws['B7'].value
+workbook_with_info_from_user = openpyxl.load_workbook("input.xlsx")
+active_list_wb_from_user = workbook_with_info_from_user.active
+year = active_list_wb_from_user['B7'].value
 if year not in years:
-    print("Неправильно указан год! Он должен быть в интервале с 2010 по 2023.")
+    print("Неправильно указан год! Он должен быть в интервале с 2010 по 2023.\nИсправьте и запустите программу заново!)")
     exit()
-year_end = ws['B9'].value
+year_end = active_list_wb_from_user['B9'].value
 if year_end != None:
     if year_end not in years:
-        print("Неправильно указан год! Он должен быть в интервале с 2010 по 2023.")
+        print("Неправильно указан год! Он должен быть в интервале с 2010 по 2023.\nИсправьте и запустите программу заново!)")
         exit()
-    if year < year_end:
-        print("Второй год должен быть больше первого)")
+    if year > year_end:
+        print("Второй год должен быть больше первого.\nИсправьте и запустите программу заново!)")
         exit()
 else:
     year_end = year
-registernum = str(ws['B12'].value)
-check = re.match(r'\d{5}-\d{2}', registernum)
-if check == None:
+registernum = str(active_list_wb_from_user['B12'].value)
+check_registernum = re.match(r'\b\d{5}-\d{2}\b', registernum)
+if check_registernum == None:
     print("Неправильно указан регистрационный номер.")
     exit()
 registernum = f'{"*"}{registernum}{"*"}'
@@ -44,15 +44,14 @@ all_rows = 0
 
 
 def receive_page(year, registernum, rows, start):
-    url2 = 'https://fgis.gost.ru/fundmetrology/cm/xcdb/vri/select?fq=verification_year:' + str(
+    web_url = 'https://fgis.gost.ru/fundmetrology/cm/xcdb/vri/select?fq=verification_year:' + str(
         year) + '&fq=mi.mitnumber:' + registernum + '&q=*&fl=vri_id,org_title,mi.mitnumber,mi.mititle,mi.mitype,mi.modification,mi.number,verification_date,valid_date,applicability,result_docnum,sticker_num&sort=verification_date+desc,org_title+asc&rows=' + str(
         rows) + '&start=' + str(start)
-    response = requests.get(url2)  # происходит попытка извлечь данные из определенного ресурса
+    response = requests.get(web_url)  # происходит попытка извлечь данные из определенного ресурса
     # print(response)
     bs4 = BeautifulSoup(response.content, "lxml")  # Создается объект BeautifulSoup, HTML-данные передаются конструктору.
-    # Второй параметр определяет синтаксический анализатор.
-    # print(bs4)
     PageData = bs4.get_text()  # возвращает весь текст HTML-документа или HTML-тега в виде единственной строки
+    # print(PageData)
     return PageData
 
 
@@ -86,6 +85,7 @@ while year != year_end + 1:
         IndexDict = PageData.find('"docs":')
         Result = PageData[IndexDict+7:-3]
         ResultList = Result.split("}") #получили список
+        # print(ResultList)
 
         for j in range(rows):
             count += 1
@@ -118,7 +118,9 @@ wb = Workbook()  # создаётся файл Excel
 dest_filename = 'try.xlsx'  # имя созданного файла Excel
 sheet = wb.active
 sheet.title = "static"  # указывавем имя листу, с которым работаем
+
 for row in range(1, 2):
+    sheet.append(['Регистрационный номер', 'Модификация', 'Заводской номер', 'Тип'])
     for i in range(all_rows):
         sheet.append([RegisterNumber[i], RegisterModification[i], SerialNumber[i], ModelName[i]])
 wb.save(dest_filename)  # сохраняем файл, с которым работали
