@@ -6,7 +6,7 @@ import time
 import re
 
 years = [2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023]
-workbook_with_info_from_user = openpyxl.load_workbook("input.xlsx")
+workbook_with_info_from_user = openpyxl.load_workbook("Вводные_данные.xlsx")
 active_list_wb_from_user = workbook_with_info_from_user.active
 year = active_list_wb_from_user['B7'].value
 if year not in years:
@@ -41,6 +41,7 @@ SerialNumber = []
 ModelName = []
 totalChar = []
 all_rows = 0
+range_for_print = []
 
 
 def receive_page(year, registernum, rows, start):
@@ -78,6 +79,7 @@ while year != year_end + 1:
     count = 0
     PageData = receive_page(year, registernum, rows, start)
     Count_Max_Range = find_max_range_index(PageData)
+    range_for_print.append(Count_Max_Range)
     all_rows += Count_Max_Range
     for i in range(Count_Max_Range // 100 + 1):
         rows = 100
@@ -85,9 +87,8 @@ while year != year_end + 1:
         IndexDict = PageData.find('"docs":')
         Result = PageData[IndexDict+7:-3]
         ResultList = Result.split("}") #получили список
-        # print(ResultList)
 
-        for j in range(rows):
+        for j in range(len(ResultList) - 1):
             count += 1
             ResultString = ResultList[j]
 
@@ -107,21 +108,29 @@ while year != year_end + 1:
             IndexModelName = ResultString.find('"mi.mitype":"')
             ModelName.append(find_info(IndexModelName, ResultString, 13, 20))
 
-            if count == Count_Max_Range:
-                break
-
         start += 100
     year += 1
 
-
+# print(range_for_print)
 wb = Workbook()  # создаётся файл Excel
-dest_filename = 'try.xlsx'  # имя созданного файла Excel
+dest_filename = 'Result.xlsx'  # имя созданного файла Excel
 sheet = wb.active
 sheet.title = "static"  # указывавем имя листу, с которым работаем
 
+j = 0
+year_now = 0
+year -= 1
 for row in range(1, 2):
     sheet.append(['Регистрационный номер', 'Модификация', 'Заводской номер', 'Тип'])
+    if len(range_for_print) == 1:
+        sheet.append([year])
     for i in range(all_rows):
+        if len(range_for_print) != 1:
+            if year_now == 0 or i == year_now + range_for_print[j]:
+                sheet.append([year + j])
+                j += 1
+                year_now = year_now + range_for_print[j]
+
         sheet.append([RegisterNumber[i], RegisterModification[i], SerialNumber[i], ModelName[i]])
 wb.save(dest_filename)  # сохраняем файл, с которым работали
 print('Файл создан')
